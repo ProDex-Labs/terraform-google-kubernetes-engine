@@ -673,6 +673,23 @@ variable "enable_secret_manager_addon" {
   default     = false
 }
 
+variable "secret_manager_rotation_config" {
+  description = "Control mounted Secret Manager rotation, or leave null to preserve the existing rotation setting. Requires the Secret Manager add-on and GKE 1.32.2-gke.1059000 or later."
+  type = object({
+    enabled           = bool
+    rotation_interval = optional(string, "120s")
+  })
+  default = null
+
+  validation {
+    condition = var.secret_manager_rotation_config == null ? true : (
+      can(regex("^[0-9]+s$", var.secret_manager_rotation_config.rotation_interval)) &&
+      try(tonumber(trimsuffix(var.secret_manager_rotation_config.rotation_interval, "s")) >= 60, false)
+    )
+    error_message = "The Secret Manager rotation interval must be a whole number of seconds of at least 60s."
+  }
+}
+
 variable "workload_vulnerability_mode" {
   description = "(beta) Sets which mode to use for Protect workload vulnerability scanning feature. Accepted values are DISABLED, BASIC."
   type        = string
